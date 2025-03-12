@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Odin4-GUI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a65c1a532ac5258cb3b58eaf7eb22c4866a16ec")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e0fae5d7427c4a9b390b1942a0dcc05b7f75abad")]
 [assembly: System.Reflection.AssemblyProductAttribute("Odin4-GUI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Odin4-GUI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
