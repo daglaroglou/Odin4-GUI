@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Rd+F5cVn1Zs=",
+  "dgSpecHash": "DkWOe2Pg8sM=",
   "success": true,
-  "projectFilePath": "/home/dag/Documents/CODES/Odin4-GUI/Odin4-GUI.csproj",
+  "projectFilePath": "/home/dag/Odin4-GUI/Odin4-GUI/Odin4-GUI.csproj",
   "expectedPackageFiles": [
     "/home/dag/.nuget/packages/atksharp/3.24.24.95/atksharp.3.24.24.95.nupkg.sha512",
     "/home/dag/.nuget/packages/cairosharp/3.24.24.95/cairosharp.3.24.24.95.nupkg.sha512",

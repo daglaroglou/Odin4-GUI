@@ -243,11 +243,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/dag/Documents/CODES/Odin4-GUI/Odin4-GUI.csproj",
+      "projectUniqueName": "/home/dag/Odin4-GUI/Odin4-GUI/Odin4-GUI.csproj",
       "projectName": "Odin4-GUI",
-      "projectPath": "/home/dag/Documents/CODES/Odin4-GUI/Odin4-GUI.csproj",
+      "projectPath": "/home/dag/Odin4-GUI/Odin4-GUI/Odin4-GUI.csproj",
       "packagesPath": "/home/dag/.nuget/packages/",
-      "outputPath": "/home/dag/Documents/CODES/Odin4-GUI/obj/",
+      "outputPath": "/home/dag/Odin4-GUI/Odin4-GUI/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/dag/.nuget/NuGet/NuGet.Config"
