@@ -29,13 +29,13 @@ class Program
 
         // ADB Tab
         Box adbBox = new Box(Orientation.Vertical, 2);
-        Label adbLabel = new Label("ADB Content");
+        Label adbLabel = new Label("SOON");
         adbBox.PackStart(adbLabel, true, true, 0);
         notebook.AppendPage(adbBox, new Label("ADB"));
 
         // GAPPS Tab
         Box gappsBox = new Box(Orientation.Vertical, 2);
-        Label gappsLabel = new Label("GAPPS Content");
+        Label gappsLabel = new Label("SOON");
         gappsBox.PackStart(gappsLabel, true, true, 0);
         notebook.AppendPage(gappsBox, new Label("GAPPS"));
 
