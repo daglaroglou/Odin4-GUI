@@ -13,45 +13,33 @@ class Program
 
         Application.Init();
 
-        // Apply dark theme
         Settings.Default.ApplicationPreferDarkTheme = true;
 
-        Window window = new Window("My GTK# App");
-        window.SetDefaultSize(400, 300);
+        Window window = new Window("Odin4");
+        window.SetDefaultSize(1200, 700);
         window.DeleteEvent += (o, args) => Application.Quit();
 
-        // Create a box to hold the label and button
-        Box vbox = new Box(Orientation.Vertical, 2);
+        Notebook notebook = new Notebook();
 
-        // Create the label
-        Label label = new Label("Hello, Linux GUI with C#!");
-        vbox.PackStart(label, true, true, 0);
+        // Odin Tab
+        Box odinBox = new Box(Orientation.Vertical, 2);
+        Label odinLabel = new Label("Odin Content");
+        odinBox.PackStart(odinLabel, true, true, 0);
+        notebook.AppendPage(odinBox, new Label("Odin"));
 
-        // Create the theme toggle button
-        Button themeToggleButton = new Button();
-        Image sunIcon = new Image(Stock.Add, IconSize.Button);
-        Image moonIcon = new Image(Stock.Remove, IconSize.Button);
-        themeToggleButton.Image = moonIcon;
-        themeToggleButton.Clicked += (sender, e) =>
-        {
-            if (Settings.Default.ApplicationPreferDarkTheme)
-            {
-                Settings.Default.ApplicationPreferDarkTheme = false;
-                themeToggleButton.Image = sunIcon;
-            }
-            else
-            {
-                Settings.Default.ApplicationPreferDarkTheme = true;
-                themeToggleButton.Image = moonIcon;
-            }
-        };
+        // ADB Tab
+        Box adbBox = new Box(Orientation.Vertical, 2);
+        Label adbLabel = new Label("ADB Content");
+        adbBox.PackStart(adbLabel, true, true, 0);
+        notebook.AppendPage(adbBox, new Label("ADB"));
 
-        // Align the button to the top right
-        Box alignmentBox = new Box(Orientation.Horizontal, 0);
-        alignmentBox.PackEnd(themeToggleButton, false, false, 0);
-        vbox.PackStart(alignmentBox, false, false, 0);
+        // GAPPS Tab
+        Box gappsBox = new Box(Orientation.Vertical, 2);
+        Label gappsLabel = new Label("GAPPS Content");
+        gappsBox.PackStart(gappsLabel, true, true, 0);
+        notebook.AppendPage(gappsBox, new Label("GAPPS"));
 
-        window.Add(vbox);
+        window.Add(notebook);
         window.ShowAll();
         Application.Run();
     }

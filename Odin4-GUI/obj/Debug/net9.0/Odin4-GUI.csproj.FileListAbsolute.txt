@@ -22,3 +22,4 @@
 /home/dag/Documents/CODES/Odin4-GUI/obj/Debug/net9.0/Odin4-GUI.genruntimeconfig.cache
 /home/dag/Documents/CODES/Odin4-GUI/obj/Debug/net9.0/ref/Odin4-GUI.dll
 /home/dag/Documents/CODES/Odin4-GUI/bin/Debug/net9.0/Newtonsoft.Json.dll
+/home/dag/Documents/CODES/Odin4-GUI/obj/Debug/net9.0/Odin4-GUI.sourcelink.json
