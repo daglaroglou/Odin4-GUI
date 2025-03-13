@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 
 class Program
 {
@@ -108,6 +109,9 @@ class Program
         // Test print to log
         AppendLog("Odin4 started.");
 
+        // Run the sudo odin -l command in the background
+        RunOdinCommand();
+
         Application.Run();
     }
 
@@ -134,5 +138,32 @@ class Program
             logTextView.Buffer.Text += "  " + message + "\n"; // Add padding before the text
             logTextView.ScrollToIter(logTextView.Buffer.EndIter, 0, false, 0, 0);
         });
+    }
+
+    private static void RunOdinCommand()
+    {
+        Process process = new Process();
+        process.StartInfo.FileName = "sudo";
+        process.StartInfo.Arguments = "odin4 -l";
+        process.StartInfo.RedirectStandardOutput = true;
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.CreateNoWindow = true;
+
+        process.OutputDataReceived += (sender, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                // Extract the last three numbers from the output
+                Match match = Regex.Match(e.Data, @"\d{3}$");
+                if (match.Success)
+                {
+                    string id = match.Value;
+                    AppendLog($"<ID:{id}> Connected.");
+                }
+            }
+        };
+
+        process.Start();
+        process.BeginOutputReadLine();
     }
 }
