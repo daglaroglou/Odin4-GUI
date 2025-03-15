@@ -125,6 +125,8 @@ namespace Odin4GUI
                 string adbVersion = await GetCommandOutput("sh", "-c \"adb version | sed -n '2p' | grep -oP '\\d+\\.\\d+\\.\\d+'\"");
                 AppendLog($"ADB tools found. (v{adbVersion})");
 
+                Thread.Sleep(500); // Wait for 1 second before checking for Odin
+
                 while (!await FindOdin.FindOdin.OdinFound())
                 {
                     AppendLog("Odin4 not found.");
