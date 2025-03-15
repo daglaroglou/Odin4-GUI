@@ -68,6 +68,26 @@ namespace Odin4GUI
                 grid.Attach(browseButton, 2, i, 1, 1);
             }
 
+            // Add Start and Reset buttons
+            Button startButton = new Button("Start");
+            Button resetButton = new Button("Reset");
+
+            startButton.Clicked += (sender, e) =>
+            {
+                AppendLog("Starting...");
+                // Add your start logic here
+            };
+
+            resetButton.Clicked += (sender, e) =>
+            {
+                AppendLog("Reseted.");
+                // Add your reset logic here
+            };
+
+            // Attach the buttons to the grid
+            grid.Attach(startButton, 0, options.Length, 2, 1);
+            grid.Attach(resetButton, 2, options.Length, 1, 1);
+
             odinBox.PackStart(grid, false, false, 0);
 
             // Create a Paned widget to split the view
@@ -134,9 +154,6 @@ namespace Odin4GUI
 
                 string odinVersion = await GetCommandOutput("sh", "-c \"sudo odin4 -v | grep -oP '\\d+\\.\\d+\\.\\d+'\"");
                 AppendLog($"Odin4 found (v{odinVersion})");
-
-                // Run the sudo odin -l command in the background
-                RunOdinCommand();
 
                 // Initialize and start the device check timer
                 deviceCheckTimer = new System.Timers.Timer(1000); // Check every 1 second
@@ -210,33 +227,6 @@ namespace Odin4GUI
                     }
                 }
             });
-        }
-
-        private static void RunOdinCommand()
-        {
-            Process process = new Process();
-            process.StartInfo.FileName = "sudo";
-            process.StartInfo.Arguments = "odin4 -l";
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            process.OutputDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    // Extract the last three numbers from the output
-                    Match match = Regex.Match(e.Data, @"\d{3}$");
-                    if (match.Success)
-                    {
-                        string id = match.Value;
-                        AppendLog($"<ID:{id}> Connected.");
-                    }
-                }
-            };
-
-            process.Start();
-            process.BeginOutputReadLine();
         }
 
         private static async Task<string> GetCommandOutput(string command, string arguments)
