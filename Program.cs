@@ -8,8 +8,8 @@ namespace Odin4GUI
     public class Program
     {
         // UI Elements
-        private static Window mainWindow;
-        private static TextView logTextView;
+        private static Window? mainWindow;
+        private static TextView? logTextView;
 
         public static void Main(string[] args)
         {
@@ -25,7 +25,7 @@ namespace Odin4GUI
                 Helper.UiSynchronizationContext = SynchronizationContext.Current;
 
                 // Create and start the UI thread
-                Thread uiThread = new Thread(RunUI);
+                Thread uiThread = new Thread(() => RunUI());
                 uiThread.IsBackground = false; // Make this a foreground thread
                 uiThread.Start();
 
@@ -108,7 +108,10 @@ namespace Odin4GUI
             logTextView = new TextView { Editable = false, Monospace = true };
 
             // Pass the log text view to the Helper class
-            Helper.SetLogTextView(logTextView);
+            if (logTextView != null)
+            {
+                Helper.SetLogTextView(logTextView);
+            }
 
             ScrolledWindow scrolledWindow = new ScrolledWindow();
             scrolledWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -168,7 +171,7 @@ namespace Odin4GUI
             return gappsBox;
         }
 
-        private static void OnWindowClosed(object sender, DeleteEventArgs args)
+        private static void OnWindowClosed(object? sender, DeleteEventArgs args)
         {
             // Clean up resources when the window is closed
             Helper.CleanupResources();
