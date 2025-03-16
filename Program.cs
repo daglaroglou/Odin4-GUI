@@ -1,68 +1,137 @@
-﻿using FindADBTools;
-using Gtk;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Timers;
+﻿using Gtk;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Odin4GUI
 {
-    class Program
+    public class Program
     {
-        static TextView logTextView = new TextView { Editable = false, Monospace = true };
-        static System.Timers.Timer deviceCheckTimer = new System.Timers.Timer();
-        static bool isConnected = false; // Guard variable to track connection status
-        static string connectedDeviceId = string.Empty; // Variable to store the ID of the connected device
+        // UI Elements
+        private static Window mainWindow;
+        private static TextView logTextView;
 
-        static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
-            if (!IsRunningAsRoot())
+            try
             {
-                ShowSudoRequiredMessage();
-                return;
+                // Initialize cancellation token source
+                Helper.CancellationTokenSource = new CancellationTokenSource();
+
+                // Initialize GTK
+                Application.Init();
+
+                // Store the UI synchronization context
+                Helper.UiSynchronizationContext = SynchronizationContext.Current;
+
+                // Create and start the UI thread
+                Thread uiThread = new Thread(RunUI);
+                uiThread.IsBackground = false; // Make this a foreground thread
+                uiThread.Start();
+
+                // Wait for the UI to be initialized
+                Helper.UiInitializedEvent.WaitOne();
+
+                // Start the background tasks on a separate thread
+                Thread backgroundThread = new Thread(async () => await Helper.RunBackgroundTasks());
+                backgroundThread.IsBackground = true;
+                backgroundThread.Start();
+
+                // Keep the main thread alive until the application exits
+                Application.Run();
             }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Fatal error in Main: {ex}");
+                Helper.DisplayErrorMessage($"Fatal error: {ex.Message}\n\nPlease report this issue.");
+            }
+        }
 
-            Application.Init();
+        private static void RunUI()
+        {
+            try
+            {
+                // Set application-wide dark theme preference
+                Settings.Default.ApplicationPreferDarkTheme = true;
 
-            Settings.Default.ApplicationPreferDarkTheme = true;
+                // Create main window
+                mainWindow = new Window("Odin4 GUI");
+                mainWindow.SetDefaultSize(1200, 700);
+                mainWindow.DeleteEvent += OnWindowClosed;
 
-            Window window = new Window("Odin4");
-            window.SetDefaultSize(1200, 700);
-            window.DeleteEvent += (o, args) => Application.Quit();
+                // Create notebook (tab container)
+                Notebook notebook = new Notebook();
 
-            Notebook notebook = new Notebook();
+                // Create tabs
+                notebook.AppendPage(CreateOdinTab(), new Label("Odin"));
+                notebook.AppendPage(CreateAdbTab(), new Label("ADB"));
+                notebook.AppendPage(CreateGappsTab(), new Label("GAPPS"));
 
-            // Odin Tab
+                // Add notebook to window
+                mainWindow.Add(notebook);
+                mainWindow.ShowAll();
+
+                // Signal that UI is initialized
+                Helper.UiInitializedEvent.Set();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error initializing UI: {ex}");
+                Helper.DisplayErrorMessage($"Error initializing UI: {ex.Message}");
+                Helper.UiInitializedEvent.Set(); // Signal even on error
+            }
+        }
+
+        private static Widget CreateOdinTab()
+        {
+            // Create a horizontally-oriented paned container
+            Paned paned = new Paned(Orientation.Horizontal);
+            paned.Position = 880;
+
+            // Left side: Odin options
             Box odinBox = new Box(Orientation.Vertical, 2);
+            paned.Pack1(odinBox, true, false);
 
+            // Create the grid for firmware options
+            Grid grid = CreateFirmwareOptionsGrid();
+            odinBox.PackStart(grid, false, false, 0);
+
+            // Right side: Logs
+            Box rightBox = new Box(Orientation.Vertical, 2);
+            paned.Pack2(rightBox, true, false);
+
+            // Add logs title
+            Label logTitleLabel = new Label("Logs");
+            rightBox.PackStart(logTitleLabel, false, false, 0);
+
+            // Create log view with scrolling
+            logTextView = new TextView { Editable = false, Monospace = true };
+
+            // Pass the log text view to the Helper class
+            Helper.SetLogTextView(logTextView);
+
+            ScrolledWindow scrolledWindow = new ScrolledWindow();
+            scrolledWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+            scrolledWindow.Add(logTextView);
+            rightBox.PackStart(scrolledWindow, true, true, 0);
+
+            return paned;
+        }
+
+        private static Grid CreateFirmwareOptionsGrid()
+        {
             string[] options = { "BL", "AP", "CP", "CSC", "USERDATA" };
-            Grid grid = new Grid();
-            grid.ColumnSpacing = 5;
-            grid.RowSpacing = 5;
+            Grid grid = new Grid { ColumnSpacing = 5, RowSpacing = 5 };
 
+            // Create rows for each firmware option
             for (int i = 0; i < options.Length; i++)
             {
                 CheckButton checkButton = new CheckButton(options[i]);
                 Entry entry = new Entry();
                 Button browseButton = new Button("Browse");
 
-                browseButton.Clicked += (sender, e) =>
-                {
-                        FileChooserDialog fileChooser = new FileChooserDialog(
-                        "Choose the file",
-                        null,
-                        FileChooserAction.Open,
-                        "Cancel", ResponseType.Cancel,
-                        "Open", ResponseType.Accept);
-                    fileChooser.SetCurrentFolder("/home");
-
-                    if (fileChooser.Run() == (int)ResponseType.Accept)
-                    {
-                        entry.Text = fileChooser.Filename;
-                        AppendLog($"Selected file: {fileChooser.Filename}");
-                    }
-
-                    fileChooser.Destroy();
-                };
+                int index = i; // Capture the current index
+                browseButton.Clicked += (sender, e) => Helper.BrowseForFile(entry, mainWindow);
 
                 grid.Attach(checkButton, 0, i, 1, 1);
                 grid.Attach(entry, 1, i, 1, 1);
@@ -73,234 +142,37 @@ namespace Odin4GUI
             Button startButton = new Button("Start");
             Button resetButton = new Button("Reset");
 
-            startButton.Clicked += async (sender, e) =>
-            {
-                var selectedFiles = new List<string>();
+            startButton.Clicked += async (sender, e) => await Helper.StartOdinProcess(grid, options);
+            resetButton.Clicked += (sender, e) => Helper.ResetForm(grid);
 
-                // Loop through the grid to get selected files and options
-                foreach (Widget widget in grid.Children)
-                {
-                    if (widget is Entry entry)
-                    {
-                        string filePath = entry.Text;
-                        if (!string.IsNullOrEmpty(filePath))
-                        {
-                            int row = (int)grid.ChildGetProperty(entry, "top-attach");
-                            Widget checkButtonWidget = grid.GetChildAt(0, row);
-
-                            if (checkButtonWidget is CheckButton checkButton && checkButton.Active)
-                            {
-                                string option = options[row];
-                                string flag = option switch
-                                {
-                                    "BL" => "-b",
-                                    "AP" => "-a",
-                                    "CP" => "-c",
-                                    "CSC" => "-s",
-                                    "USERDATA" => "-u",
-                                    _ => string.Empty
-                                };
-
-                                if (!string.IsNullOrEmpty(flag))
-                                {
-                                    selectedFiles.Add($"{flag} \"{filePath}\"");
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (selectedFiles.Count == 0)
-                {
-                    AppendLog("No files selected.");
-                    return;
-                }
-
-                // Construct the Odin command
-                string arguments = string.Join(" ", selectedFiles);
-
-                // Run the Odin command
-                string result = await GetCommandOutput("sudo", $"odin4 {arguments}");
-                AppendLog(result);
-            };
-
-
-            resetButton.Clicked += (sender, e) =>
-            {
-                AppendLog("Reseted.");
-                // Clear all entries and uncheck all check buttons
-                foreach (Widget widget in grid.Children)
-                {
-                    if (widget is Entry entry)
-                    {
-                        entry.Text = string.Empty;
-                    }
-                    else if (widget is CheckButton checkButton)
-                    {
-                        checkButton.Active = false;
-                    }
-                }
-            };
-
-            // Attach the buttons to the grid
+            // Attach buttons to the grid
             grid.Attach(startButton, 0, options.Length, 2, 1);
             grid.Attach(resetButton, 2, options.Length, 1, 1);
 
-            odinBox.PackStart(grid, false, false, 0);
+            return grid;
+        }
 
-            // Create a Paned widget to split the view
-            Paned paned = new Paned(Orientation.Horizontal);
-            paned.Position = 880; // Adjust the initial position to make the logs tab wider
-            paned.Pack1(odinBox, true, false);
-
-            // Create a VBox for the right side
-            Box rightBox = new Box(Orientation.Vertical, 2);
-
-            // Add a title label to the right side
-            Label logTitleLabel = new Label("Logs");
-            rightBox.PackStart(logTitleLabel, false, false, 0);
-
-            // Create a ScrolledWindow to make the TextView scrollable
-            ScrolledWindow scrolledWindow = new ScrolledWindow();
-            scrolledWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic); // Ensure scrollbars are shown automatically
-            scrolledWindow.Add(logTextView);
-
-            // Pack the ScrolledWindow into the rightBox
-            rightBox.PackStart(scrolledWindow, true, true, 0);
-
-            // Pack the rightBox into the right side of the Paned widget
-            paned.Pack2(rightBox, true, false);
-
-            // Add the Paned widget to the notebook
-            notebook.AppendPage(paned, new Label("Odin"));
-
-            // ADB Tab
+        private static Widget CreateAdbTab()
+        {
             Box adbBox = new Box(Orientation.Vertical, 2);
-            Label adbLabel = new Label("SOON");
+            Label adbLabel = new Label("ADB functionality coming soon");
             adbBox.PackStart(adbLabel, true, true, 0);
-            notebook.AppendPage(adbBox, new Label("ADB"));
+            return adbBox;
+        }
 
-            // GAPPS Tab
+        private static Widget CreateGappsTab()
+        {
             Box gappsBox = new Box(Orientation.Vertical, 2);
-            Label gappsLabel = new Label("SOON");
+            Label gappsLabel = new Label("GAPPS functionality coming soon");
             gappsBox.PackStart(gappsLabel, true, true, 0);
-            notebook.AppendPage(gappsBox, new Label("GAPPS"));
-
-            window.Add(notebook);
-            window.ShowAll();
-
-            // Run the background tasks after the UI is shown
-            _ = Task.Run(async () =>
-            {
-                // Wait for 1 second before checking for Odin and ADB
-                await Task.Delay(1000);
-
-                while (!await FindAdbTools.ADBFound() || !await FindAdbTools.FastbootFound())
-                {
-                    AppendLog("ADB tools not found.");
-                }
-
-                string adbVersion = await GetCommandOutput("sh", "-c \"adb version | sed -n '2p' | grep -oP '\\d+\\.\\d+\\.\\d+'\"");
-                AppendLog($"ADB tools found. (v{adbVersion})");
-
-                Thread.Sleep(500); // Wait for 1 second before checking for Odin
-
-                while (!await FindOdin.FindOdin.OdinFound())
-                {
-                    AppendLog("Odin4 not found.");
-                }
-
-                string odinVersion = await GetCommandOutput("sh", "-c \"sudo odin4 -v | grep -oP '\\d+\\.\\d+\\.\\d+'\"");
-                AppendLog($"Odin4 found (v{odinVersion})");
-
-                // Initialize and start the device check timer
-                deviceCheckTimer = new System.Timers.Timer(1000); // Check every 1 second
-                deviceCheckTimer.Elapsed += CheckDeviceConnection;
-                deviceCheckTimer.Start();
-            });
-
-            Application.Run();
+            return gappsBox;
         }
 
-        private static bool IsRunningAsRoot()
+        private static void OnWindowClosed(object sender, DeleteEventArgs args)
         {
-            return Environment.UserName == "root";
-        }
-
-        private static void ShowSudoRequiredMessage()
-        {
-            Application.Init();
-            MessageDialog md = new MessageDialog(null, 
-                DialogFlags.Modal, MessageType.Warning, ButtonsType.Ok,
-                "This program requires sudo permissions to run. Please restart it with 'sudo'.");
-            md.Run();
-            md.Destroy();
+            // Clean up resources when the window is closed
+            Helper.CleanupResources();
             Application.Quit();
-        }
-
-        private static void AppendLog(string message)
-        {
-            Application.Invoke(delegate
-            {
-                TextBuffer buffer = logTextView.Buffer;
-                TextIter endIter = buffer.EndIter;
-                string timestamp = DateTime.Now.ToString("  [HH:mm] > ");
-                buffer.Insert(ref endIter,  timestamp + message + "\n");
-
-                // Create a tag for smaller font size
-                TextTag tag = new TextTag(null);
-                tag.SizePoints = 10; // Set the font size to 10 points
-                buffer.TagTable.Add(tag);
-
-                // Apply the tag to the newly inserted text
-                buffer.ApplyTag(tag, buffer.StartIter, buffer.EndIter);
-
-                logTextView.ScrollToIter(buffer.EndIter, 0, false, 0, 0);
-            });
-        }
-
-        private static void CheckDeviceConnection(object? sender, ElapsedEventArgs e)
-        {
-            Task.Run(async () =>
-            {
-                string output = await GetCommandOutput("sudo", "odin4 -l");
-                Match match = Regex.Match(output, @"\d{3}$");
-                if (match.Success)
-                {
-                    string id = match.Value;
-                    if (!isConnected)
-                    {
-                        isConnected = true;
-                        connectedDeviceId = id;
-                        AppendLog($"<ID:{id}> Connected.");
-                    }
-                }
-                else
-                {
-                    if (isConnected)
-                    {
-                        isConnected = false;
-                        AppendLog($"<ID:{connectedDeviceId}> Disconnected.");
-                        connectedDeviceId = string.Empty; // Reset the connected device ID
-                    }
-                }
-            });
-        }
-
-        private static async Task<string> GetCommandOutput(string command, string arguments)
-        {
-            Process process = new Process();
-            process.StartInfo.FileName = command;
-            process.StartInfo.Arguments = arguments;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            process.Start();
-            string output = await process.StandardOutput.ReadToEndAsync();
-            process.WaitForExit();
-
-            return output.Trim();
         }
     }
 }
