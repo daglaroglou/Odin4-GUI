@@ -26,7 +26,10 @@ namespace Odin4GUI
                 Console.WriteLine("Starting Odin download process...");
 
                 // Create the temporary directory if it doesn't exist
-                Directory.CreateDirectory(Path.GetDirectoryName(TempZipPath));
+                if (Path.GetDirectoryName(TempZipPath) is string tempDir && !string.IsNullOrEmpty(tempDir))
+                {
+                    Directory.CreateDirectory(tempDir);
+                }
 
                 // Get download URL from GitHub
                 string downloadUrl = await GetLatestReleaseUrl();
@@ -66,7 +69,7 @@ namespace Odin4GUI
                 throw new Exception("No assets found in the release");
 
             // Get the first asset's download URL
-            string downloadUrl = assets[0]["browser_download_url"]?.ToString();
+            string? downloadUrl = assets[0]["browser_download_url"]?.ToString();
             if (string.IsNullOrEmpty(downloadUrl))
                 throw new Exception("No download URL found for the asset");
 
@@ -115,7 +118,7 @@ namespace Odin4GUI
                 ListAllFiles(ExtractPath);
 
                 // Use a more robust approach to find the Odin executable
-                string odinExecutablePath = FindOdinExecutable(ExtractPath);
+                string? odinExecutablePath = FindOdinExecutable(ExtractPath);
 
                 if (string.IsNullOrEmpty(odinExecutablePath))
                     throw new FileNotFoundException("Odin executable not found in the extracted files");
@@ -127,8 +130,8 @@ namespace Odin4GUI
                 Console.WriteLine("Set executable permissions");
 
                 // Create directory if it doesn't exist
-                string binDirectory = Path.GetDirectoryName(BinPath);
-                if (!Directory.Exists(binDirectory))
+                string? binDirectory = Path.GetDirectoryName(BinPath);
+                if (!string.IsNullOrEmpty(binDirectory) && !Directory.Exists(binDirectory))
                 {
                     Console.WriteLine($"Creating directory: {binDirectory}");
                     Directory.CreateDirectory(binDirectory);
@@ -190,7 +193,7 @@ namespace Odin4GUI
         /// <summary>
         /// Finds the Odin executable in the extracted files
         /// </summary>
-        private static string FindOdinExecutable(string rootPath)
+        private static string? FindOdinExecutable(string rootPath)
         {
             try
             {
@@ -234,10 +237,10 @@ namespace Odin4GUI
             {
                 using FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 byte[] buffer = new byte[4];
-                fs.Read(buffer, 0, 4);
+                int bytesRead = fs.Read(buffer, 0, 4);
 
                 // Check for ELF magic number (0x7F 'E' 'L' 'F')
-                return buffer[0] == 0x7F && buffer[1] == 'E' && buffer[2] == 'L' && buffer[3] == 'F';
+                return bytesRead == 4 && buffer[0] == 0x7F && buffer[1] == 'E' && buffer[2] == 'L' && buffer[3] == 'F';
             }
             catch
             {
