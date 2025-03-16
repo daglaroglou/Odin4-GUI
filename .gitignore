@@ -1,2 +1,20 @@
+# Ignore Visual Studio-specific files
+.vs/
+
+# Ignore build output
 bin/
-.git
+obj/
+
+# Ignore user-specific settings
+*.user
+*.suo
+*.cache
+*.log
+*.pdb
+
+# Ignore Rider and JetBrains files
+.idea/
+*.sln.iml
+
+# Ignore NuGet packages
+packages/
