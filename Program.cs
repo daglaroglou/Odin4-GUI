@@ -1,5 +1,4 @@
 ﻿using Gtk;
-using Odin4_GUI.misc;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

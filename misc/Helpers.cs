@@ -1,5 +1,4 @@
 ﻿using Gtk;
-using Odin4GUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,23 +8,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Odin4_GUI.misc
+namespace Odin4GUI
 {
     public static class Helper
     {
         // Device monitoring
-        private static System.Timers.Timer deviceCheckTimer;
+        private static System.Timers.Timer? deviceCheckTimer;
         private static bool isDeviceConnected = false;
         private static string connectedDeviceId = string.Empty;
 
         // Thread synchronization
         private static readonly object logLock = new object();
-        public static SynchronizationContext UiSynchronizationContext { get; set; }
+        public static SynchronizationContext? UiSynchronizationContext { get; set; }
         public static ManualResetEvent UiInitializedEvent { get; } = new ManualResetEvent(false);
-        public static CancellationTokenSource CancellationTokenSource { get; set; }
+        public static CancellationTokenSource? CancellationTokenSource { get; set; }
 
         // UI reference for logging
-        private static TextView logTextView;
+        private static TextView? logTextView;
 
         public static void SetLogTextView(TextView textView)
         {
@@ -166,7 +165,7 @@ namespace Odin4_GUI.misc
             }
         }
 
-        private static void CheckDeviceConnection(object sender, ElapsedEventArgs e)
+        private static void CheckDeviceConnection(object? sender, ElapsedEventArgs e)
         {
             Task.Run(async () =>
             {
@@ -302,7 +301,7 @@ namespace Odin4_GUI.misc
                         if (!string.IsNullOrEmpty(filePath))
                         {
                             int row = (int)grid.ChildGetProperty(entry, "top-attach");
-                            Widget checkButtonWidget = grid.GetChildAt(0, row);
+                            Widget? checkButtonWidget = grid.GetChildAt(0, row);
 
                             if (checkButtonWidget is CheckButton checkButton && checkButton.Active)
                             {
@@ -373,7 +372,7 @@ namespace Odin4_GUI.misc
             }
         }
 
-        public static void BrowseForFile(Entry entry, Window parentWindow)
+        public static void BrowseForFile(Entry entry, Window? parentWindow)
         {
             try
             {
@@ -405,6 +404,36 @@ namespace Odin4_GUI.misc
             deviceCheckTimer?.Stop();
             deviceCheckTimer?.Dispose();
             CancellationTokenSource?.Cancel();
+        }
+
+        // Add these methods to properly handle file operations with null checks
+        public static void SafeCreateDirectory(string? path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+
+        public static void SafeReadFromStream(FileStream stream, byte[] buffer, int offset, int count)
+        {
+            int bytesRead = 0;
+            int totalBytesRead = 0;
+
+            while (totalBytesRead < count)
+            {
+                bytesRead = stream.Read(buffer, offset + totalBytesRead, count - totalBytesRead);
+                if (bytesRead == 0)
+                {
+                    break; // End of stream
+                }
+                totalBytesRead += bytesRead;
+            }
+
+            if (totalBytesRead != count)
+            {
+                throw new IOException($"Expected to read {count} bytes but read {totalBytesRead} bytes.");
+            }
         }
     }
 }
