@@ -1,5 +1,6 @@
 # Ignore Visual Studio-specific files
 .vs/
+.vscode/
 
 # Ignore build output
 bin/
