@@ -47,12 +47,13 @@ namespace Odin4GUI
 
                 browseButton.Clicked += (sender, e) =>
                 {
-                    FileChooserDialog fileChooser = new FileChooserDialog(
+                        FileChooserDialog fileChooser = new FileChooserDialog(
                         "Choose the file",
                         null,
                         FileChooserAction.Open,
                         "Cancel", ResponseType.Cancel,
                         "Open", ResponseType.Accept);
+                    fileChooser.SetCurrentFolder("/home");
 
                     if (fileChooser.Run() == (int)ResponseType.Accept)
                     {
@@ -72,16 +73,74 @@ namespace Odin4GUI
             Button startButton = new Button("Start");
             Button resetButton = new Button("Reset");
 
-            startButton.Clicked += (sender, e) =>
+            startButton.Clicked += async (sender, e) =>
             {
-                AppendLog("Starting...");
-                // Add your start logic here
+                var selectedFiles = new List<string>();
+
+                // Loop through the grid to get selected files and options
+                foreach (Widget widget in grid.Children)
+                {
+                    if (widget is Entry entry)
+                    {
+                        string filePath = entry.Text;
+                        if (!string.IsNullOrEmpty(filePath))
+                        {
+                            int row = (int)grid.ChildGetProperty(entry, "top-attach");
+                            Widget checkButtonWidget = grid.GetChildAt(0, row);
+
+                            if (checkButtonWidget is CheckButton checkButton && checkButton.Active)
+                            {
+                                string option = options[row];
+                                string flag = option switch
+                                {
+                                    "BL" => "-b",
+                                    "AP" => "-a",
+                                    "CP" => "-c",
+                                    "CSC" => "-s",
+                                    "USERDATA" => "-u",
+                                    _ => string.Empty
+                                };
+
+                                if (!string.IsNullOrEmpty(flag))
+                                {
+                                    selectedFiles.Add($"{flag} \"{filePath}\"");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (selectedFiles.Count == 0)
+                {
+                    AppendLog("No files selected.");
+                    return;
+                }
+
+                // Construct the Odin command
+                string arguments = string.Join(" ", selectedFiles);
+
+                // Run the Odin command
+                string result = await GetCommandOutput("sudo", $"odin4 {arguments}");
+
+                AppendLog(result);
             };
+
 
             resetButton.Clicked += (sender, e) =>
             {
                 AppendLog("Reseted.");
-                // Add your reset logic here
+                // Clear all entries and uncheck all check buttons
+                foreach (Widget widget in grid.Children)
+                {
+                    if (widget is Entry entry)
+                    {
+                        entry.Text = string.Empty;
+                    }
+                    else if (widget is CheckButton checkButton)
+                    {
+                        checkButton.Active = false;
+                    }
+                }
             };
 
             // Attach the buttons to the grid
