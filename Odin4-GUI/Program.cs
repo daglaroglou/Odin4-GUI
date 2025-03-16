@@ -121,7 +121,6 @@ namespace Odin4GUI
 
                 // Run the Odin command
                 string result = await GetCommandOutput("sudo", $"odin4 {arguments}");
-
                 AppendLog(result);
             };
 
