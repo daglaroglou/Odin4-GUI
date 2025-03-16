@@ -18,3 +18,4 @@ obj/
 
 # Ignore NuGet packages
 packages/
+/Properties/PublishProfiles/FolderProfile.pubxml
