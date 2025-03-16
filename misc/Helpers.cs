@@ -1,4 +1,5 @@
 ﻿using Gtk;
+using Odin4GUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Odin4GUI
+namespace Odin4_GUI.misc
 {
     public static class Helper
     {
