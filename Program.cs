@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Odin4GUI
 {
@@ -158,16 +159,37 @@ namespace Odin4GUI
         private static Widget CreateAdbTab()
         {
             Box adbBox = new Box(Orientation.Vertical, 2);
-            Label adbLabel = new Label("ADB functionality coming soon");
-            adbBox.PackStart(adbLabel, true, true, 0);
+            var image = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.construction.png", 200, 220);
+
+            if (image != null)
+            {
+                Image imageWidget = new Image(image);
+                adbBox.PackStart(imageWidget, true, true, 0);
+            }
+            else
+            {
+                Label errorLabel = new Label("Failed to load image.");
+                adbBox.PackStart(errorLabel, true, true, 0);
+            }
+
             return adbBox;
         }
 
         private static Widget CreateGappsTab()
         {
             Box gappsBox = new Box(Orientation.Vertical, 2);
-            Label gappsLabel = new Label("GAPPS functionality coming soon");
-            gappsBox.PackStart(gappsLabel, true, true, 0);
+            var image = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.construction.png", 200, 220);
+
+            if (image != null)
+            {
+                Image imageWidget = new Image(image);
+                gappsBox.PackStart(imageWidget, true, true, 0);
+            }
+            else
+            {
+                Label errorLabel = new Label("Failed to load image.");
+                gappsBox.PackStart(errorLabel, true, true, 0);
+            }
             return gappsBox;
         }
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -364,7 +365,7 @@ namespace Odin4GUI
                         checkButton.Active = false;
                     }
                 }
-                AppendLog("Form reset.");
+                AppendLog("Reseted.");
             }
             catch (Exception ex)
             {
@@ -434,6 +435,19 @@ namespace Odin4GUI
             {
                 throw new IOException($"Expected to read {count} bytes but read {totalBytesRead} bytes.");
             }
+        }
+
+        public static Gdk.Pixbuf? LoadEmbeddedImage(string resourceName, int width, int height)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream != null)
+            {
+                var pixbuf = new Gdk.Pixbuf(stream);
+                return pixbuf.ScaleSimple(width, height, Gdk.InterpType.Bilinear);
+            }
+
+            return null;
         }
     }
 }
