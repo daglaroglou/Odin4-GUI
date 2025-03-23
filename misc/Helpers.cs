@@ -437,16 +437,19 @@ namespace Odin4GUI
             }
         }
 
-        public static Gdk.Pixbuf? LoadEmbeddedImage(string resourceName, int width, int height)
+        public static Gdk.Pixbuf? LoadEmbeddedImage(string resourceName, int width = 0, int height = 0)
         {
             var assembly = Assembly.GetExecutingAssembly();
             using Stream? stream = assembly.GetManifestResourceStream(resourceName);
             if (stream != null)
             {
-                var pixbuf = new Gdk.Pixbuf(stream);
+            var pixbuf = new Gdk.Pixbuf(stream);
+            if (width > 0 && height > 0)
+            {
                 return pixbuf.ScaleSimple(width, height, Gdk.InterpType.Bilinear);
             }
-
+            return pixbuf;
+            }
             return null;
         }
     }

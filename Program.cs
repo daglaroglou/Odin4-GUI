@@ -91,11 +91,27 @@ namespace Odin4GUI
 
             // Left side: Odin options
             Box odinBox = new Box(Orientation.Vertical, 2);
-            paned.Pack1(odinBox, true, false);
+
+            // Create a horizontal container to place the grid and the image side by side
+            Box contentBox = new Box(Orientation.Horizontal, 10);
+            odinBox.PackStart(contentBox, false, false, 10); // Adjusted padding here
 
             // Create the grid for firmware options
             Grid grid = CreateFirmwareOptionsGrid();
-            odinBox.PackStart(grid, false, false, 0);
+            contentBox.PackStart(grid, false, false, 0);
+
+            // Add Samsung image next to the boxes
+            var samsungImage = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.samsung.png", 256, 85);
+            if (samsungImage != null)
+            {
+                Image imageWidget = new Image(samsungImage);
+                contentBox.PackStart(imageWidget, false, false, 120); // Adjusted padding here
+            }
+            else
+            {
+                Label errorLabel = new Label("Failed to load image.");
+                contentBox.PackStart(errorLabel, false, false, 120); // Adjusted padding here
+            }
 
             // Right side: Logs
             Box rightBox = new Box(Orientation.Vertical, 2);
@@ -118,6 +134,8 @@ namespace Odin4GUI
             scrolledWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
             scrolledWindow.Add(logTextView);
             rightBox.PackStart(scrolledWindow, true, true, 0);
+
+            paned.Pack1(odinBox, true, false);
 
             return paned;
         }

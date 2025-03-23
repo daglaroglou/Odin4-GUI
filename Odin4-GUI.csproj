@@ -12,6 +12,7 @@
     <PackageReference Include="GtkSharp" Version="3.24.24.95" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <EmbeddedResource Include="Resources\construction.png" />
+    <EmbeddedResource Include="Resources\samsung.png" />
   </ItemGroup>
 
 </Project>
