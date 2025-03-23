@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Odin4GUI
+namespace Aesir
 {
     public class GetOdin
     {

@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Odin4GUI
+namespace Aesir
 {
     public static class Helper
     {

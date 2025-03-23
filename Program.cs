@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace Odin4GUI
+namespace Aesir
 {
     public class Program
     {
@@ -56,7 +56,7 @@ namespace Odin4GUI
                 Settings.Default.ApplicationPreferDarkTheme = true;
 
                 // Create main window
-                mainWindow = new Window("Odin4 GUI");
+                mainWindow = new Window("Aesir");
                 mainWindow.SetDefaultSize(1200, 700);
                 mainWindow.DeleteEvent += OnWindowClosed;
 
@@ -68,8 +68,18 @@ namespace Odin4GUI
                 notebook.AppendPage(CreateAdbTab(), new Label("ADB"));
                 notebook.AppendPage(CreateGappsTab(), new Label("GAPPS"));
 
-                // Add notebook to window
-                mainWindow.Add(notebook);
+                // Create a vertical box to hold the notebook and the footer
+                Box mainBox = new Box(Orientation.Vertical, 0);
+                mainBox.PackStart(notebook, true, true, 0);
+
+                // Create footer label with clickable link and version information
+                Label footerLabel = new Label();
+                footerLabel.Markup = "Made by <a href=\"https://github.com/daglaroglou\">daglaroglou</a> with ❤️ · <span size='small'>v1.0</span>";
+                footerLabel.Selectable = false;
+                mainBox.PackEnd(footerLabel, false, false, 10);
+
+                // Add main box to window
+                mainWindow.Add(mainBox);
                 mainWindow.ShowAll();
 
                 // Signal that UI is initialized
@@ -101,7 +111,7 @@ namespace Odin4GUI
             contentBox.PackStart(grid, false, false, 0);
 
             // Add Samsung image next to the boxes
-            var samsungImage = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.samsung.png", 256, 85);
+            var samsungImage = Helper.LoadEmbeddedImage("Aesir.Resources.samsung.png", 256, 85);
             if (samsungImage != null)
             {
                 Image imageWidget = new Image(samsungImage);
@@ -119,6 +129,7 @@ namespace Odin4GUI
 
             // Add logs title
             Label logTitleLabel = new Label("Logs");
+            logTitleLabel.Selectable = false;
             rightBox.PackStart(logTitleLabel, false, false, 0);
 
             // Create log view with scrolling
@@ -177,7 +188,7 @@ namespace Odin4GUI
         private static Widget CreateAdbTab()
         {
             Box adbBox = new Box(Orientation.Vertical, 2);
-            var image = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.construction.png", 200, 220);
+            var image = Helper.LoadEmbeddedImage("Aesir.Resources.construction.png", 200, 220);
 
             if (image != null)
             {
@@ -196,7 +207,7 @@ namespace Odin4GUI
         private static Widget CreateGappsTab()
         {
             Box gappsBox = new Box(Orientation.Vertical, 2);
-            var image = Helper.LoadEmbeddedImage("Odin4_GUI.Resources.construction.png", 200, 220);
+            var image = Helper.LoadEmbeddedImage("Aesir.Resources.construction.png", 200, 220);
 
             if (image != null)
             {

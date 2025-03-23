@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Odin4GUI
+namespace Aesir
 {
     /// <summary>
     /// Utility class to check for ADB tools

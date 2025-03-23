@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Odin4GUI
+namespace Aesir
 {
     public class GetAdbTools
     {

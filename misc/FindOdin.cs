@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Odin4GUI
+namespace Aesir
 {
     /// <summary>
     /// Utility class to check for Odin
