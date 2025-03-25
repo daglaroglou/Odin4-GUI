@@ -146,6 +146,11 @@ namespace Aesir
             scrolledWindow.Add(logTextView);
             rightBox.PackStart(scrolledWindow, true, true, 0);
 
+            // Add Save Logs button
+            Button saveLogsButton = new Button("Save Logs");
+            saveLogsButton.Clicked += (sender, e) => SaveLogsToFile();
+            rightBox.PackStart(saveLogsButton, false, false, 10);
+
             paned.Pack1(odinBox, true, false);
 
             return paned;
@@ -227,6 +232,45 @@ namespace Aesir
             // Clean up resources when the window is closed
             Helper.CleanupResources();
             Application.Quit();
+        }
+
+        private static void SaveLogsToFile()
+        {
+            try
+            {
+                // Open a file chooser dialog to select the save location
+                FileChooserDialog fileChooser = new FileChooserDialog(
+                    "Save Logs",
+                    mainWindow,
+                    FileChooserAction.Save,
+                    "Cancel", ResponseType.Cancel,
+                    "Save", ResponseType.Accept
+                );
+
+                if (fileChooser.Run() == (int)ResponseType.Accept)
+                {
+                    string filePath = fileChooser.Filename;
+                    fileChooser.Destroy();
+
+                    // Get the logs from the TextView
+                    string logs = logTextView?.Buffer?.Text ?? string.Empty;
+
+                    // Write the logs to the selected file
+                    System.IO.File.WriteAllText(filePath, logs);
+
+                    // Display a success message
+                    Helper.AppendLog("Logs saved successfully.");
+                }
+                else
+                {
+                    fileChooser.Destroy();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error saving logs: {ex}");
+                Helper.DisplayErrorMessage($"Error saving logs: {ex.Message}");
+            }
         }
     }
 }
