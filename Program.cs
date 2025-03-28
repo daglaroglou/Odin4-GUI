@@ -1,4 +1,4 @@
-﻿using Gtk;
+using Gtk;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -122,6 +122,15 @@ namespace Aesir
                 Label errorLabel = new Label("Failed to load image.");
                 contentBox.PackStart(errorLabel, false, false, 120); // Adjusted padding here
             }
+
+            // Add instructions for entering Download Mode
+            Label downloadModeInstructions = new Label
+            {
+                Markup = "<b>How to Enter Download Mode:</b>\n1. Power off your device.\n2. Press and hold Volume Down + Home + Power buttons simultaneously.\n3. When prompted, press Volume Up to confirm.",
+                LineWrap = true,
+                Justify = Justification.Left
+            };
+            odinBox.PackStart(downloadModeInstructions, true, true, 10);
 
             // Right side: Logs
             Box rightBox = new Box(Orientation.Vertical, 2);
