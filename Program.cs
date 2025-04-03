@@ -1,4 +1,4 @@
-using Gtk;
+﻿using Gtk;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,6 +67,7 @@ namespace Aesir
                 notebook.AppendPage(CreateOdinTab(), new Label("Odin"));
                 notebook.AppendPage(CreateAdbTab(), new Label("ADB"));
                 notebook.AppendPage(CreateGappsTab(), new Label("GAPPS"));
+                notebook.AppendPage(CreateOtherTab(), new Label("Other"));
 
                 // Create a vertical box to hold the notebook and the footer
                 Box mainBox = new Box(Orientation.Vertical, 0);
@@ -234,6 +235,96 @@ namespace Aesir
                 gappsBox.PackStart(errorLabel, true, true, 0);
             }
             return gappsBox;
+        }
+
+        private static Widget CreateOtherTab()
+        {
+            // Create a vertical box to hold all sections
+            Box otherBox = new Box(Orientation.Vertical, 10);
+
+            // Section 1: Firmware Links
+            Frame firmwareFrame = new Frame();
+            Label firmwareFrameLabel = new Label
+            {
+                Markup = "<b>Firmware Links</b>",
+                Xalign = 0.5f // Center align the label horizontally
+            };
+            firmwareFrame.LabelWidget = firmwareFrameLabel;
+            Box firmwareBox = new Box(Orientation.Vertical, 5);
+
+            Button samMobileButton = new Button("SamMobile") { WidthRequest = 150 };
+            samMobileButton.Clicked += (sender, e) => OpenUrl("https://www.sammobile.com/firmwares/");
+            Button samfwButton = new Button("SamFw") { WidthRequest = 150 };
+            samfwButton.Clicked += (sender, e) => OpenUrl("https://samfw.com/");
+            Button frijaButton = new Button("Frija (GitHub)") { WidthRequest = 150 };
+            frijaButton.Clicked += (sender, e) => OpenUrl("https://github.com/cheburator/Frija");
+
+            firmwareBox.PackStart(samMobileButton, false, false, 0);
+            firmwareBox.PackStart(samfwButton, false, false, 0);
+            firmwareBox.PackStart(frijaButton, false, false, 0);
+
+            firmwareFrame.Add(firmwareBox);
+            otherBox.PackStart(firmwareFrame, false, false, 10);
+
+            // Section 2: GitHub and Support Links
+            Frame supportFrame = new Frame();
+            Label supportFrameLabel = new Label
+            {
+                Markup = "<b>GitHub and Support</b>",
+                Xalign = 0.5f // Center align the label horizontally
+            };
+            supportFrame.LabelWidget = supportFrameLabel;
+            Box supportBox = new Box(Orientation.Vertical, 5);
+
+            Button githubButton = new Button("GitHub Repository") { WidthRequest = 150 };
+            githubButton.Clicked += (sender, e) => OpenUrl("https://github.com/daglaroglou/Aesir");
+            Button issuesButton = new Button("Report an Issue") { WidthRequest = 150 };
+            issuesButton.Clicked += (sender, e) => OpenUrl("https://github.com/daglaroglou/Aesir/issues");
+            Button supportButton = new Button("Developer's GitHub") { WidthRequest = 150 };
+            supportButton.Clicked += (sender, e) => OpenUrl("https://github.com/daglaroglou");
+
+            supportBox.PackStart(githubButton, false, false, 0);
+            supportBox.PackStart(issuesButton, false, false, 0);
+            supportBox.PackStart(supportButton, false, false, 0);
+
+            supportFrame.Add(supportBox);
+            otherBox.PackStart(supportFrame, false, false, 10);
+
+            // Section 3: Donate Options
+            Frame donateFrame = new Frame();
+            Label donateFrameLabel = new Label
+            {
+                Markup = "<b>Donate</b>",
+                Xalign = 0.5f // Center align the label horizontally
+            };
+            donateFrame.LabelWidget = donateFrameLabel;
+            Box donateBox = new Box(Orientation.Vertical, 5);
+
+            Button paypalButton = new Button("Donate via PayPal") { WidthRequest = 150 };
+            paypalButton.Clicked += (sender, e) => OpenUrl("https://paypal.me/daglaroglou");
+            Button buyMeCoffeeButton = new Button("Donate via GitHub") { WidthRequest = 150 };
+            buyMeCoffeeButton.Clicked += (sender, e) => OpenUrl("https://github.com/sponsors/daglaroglou");
+
+            donateBox.PackStart(paypalButton, false, false, 0);
+            donateBox.PackStart(buyMeCoffeeButton, false, false, 0);
+
+            donateFrame.Add(donateBox);
+            otherBox.PackStart(donateFrame, false, false, 10);
+
+            return otherBox;
+        }
+
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start("xdg-open", url);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to open URL: {url}. Error: {ex}");
+                Helper.DisplayErrorMessage($"Failed to open URL: {url}\n\nError: {ex.Message}");
+            }
         }
 
         private static void OnWindowClosed(object? sender, DeleteEventArgs args)
