@@ -1,4 +1,4 @@
-﻿using Gtk;
+using Gtk;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +11,7 @@ namespace Aesir
         // UI Elements
         private static Window? mainWindow;
         private static TextView? logTextView;
+        private static TextView? adbLogTextView;
 
         public static void Main(string[] args)
         {
@@ -202,21 +203,194 @@ namespace Aesir
 
         private static Widget CreateAdbTab()
         {
-            Box adbBox = new Box(Orientation.Vertical, 2);
-            var image = Helper.LoadEmbeddedImage("Aesir.Resources.construction.png", 200, 220);
+            // Create a horizontally-oriented paned container
+            Paned paned = new Paned(Orientation.Horizontal);
+            paned.Position = 600;
 
-            if (image != null)
-            {
-                Image imageWidget = new Image(image);
-                adbBox.PackStart(imageWidget, true, true, 0);
-            }
-            else
-            {
-                Label errorLabel = new Label("Failed to load image.");
-                adbBox.PackStart(errorLabel, true, true, 0);
-            }
+            // Left side: ADB options
+            Box adbBox = new Box(Orientation.Vertical, 10);
 
-            return adbBox;
+            // Device Information Section
+            Frame deviceFrame = new Frame();
+            Label deviceFrameLabel = new Label
+            {
+                Markup = "<b>Device Information</b>",
+                Xalign = 0.5f
+            };
+            deviceFrame.LabelWidget = deviceFrameLabel;
+            Box deviceBox = new Box(Orientation.Vertical, 5);
+
+            Button refreshDevicesButton = new Button("Refresh Connected Devices") { WidthRequest = 200 };
+            refreshDevicesButton.Clicked += async (sender, e) => await RefreshAdbDevices();
+            Button deviceInfoButton = new Button("Get Device Info") { WidthRequest = 200 };
+            deviceInfoButton.Clicked += async (sender, e) => await GetDeviceInfo();
+            Button batteryInfoButton = new Button("Battery Info") { WidthRequest = 200 };
+            batteryInfoButton.Clicked += async (sender, e) => await GetBatteryInfo();
+
+            deviceBox.PackStart(refreshDevicesButton, false, false, 0);
+            deviceBox.PackStart(deviceInfoButton, false, false, 0);
+            deviceBox.PackStart(batteryInfoButton, false, false, 0);
+            deviceFrame.Add(deviceBox);
+            adbBox.PackStart(deviceFrame, false, false, 0);
+
+            // Package Management Section
+            Frame packageFrame = new Frame();
+            Label packageFrameLabel = new Label
+            {
+                Markup = "<b>Package Management</b>",
+                Xalign = 0.5f
+            };
+            packageFrame.LabelWidget = packageFrameLabel;
+            Box packageBox = new Box(Orientation.Vertical, 5);
+
+            Button listPackagesButton = new Button("List Installed Packages") { WidthRequest = 200 };
+            listPackagesButton.Clicked += async (sender, e) => await ListInstalledPackages();
+            
+            // Package installation/uninstallation
+            Box packageActionBox = new Box(Orientation.Horizontal, 5);
+            Entry packageNameEntry = new Entry { PlaceholderText = "Package name or APK path" };
+            Button installButton = new Button("Install APK");
+            installButton.Clicked += async (sender, e) => await InstallPackage(packageNameEntry.Text);
+            Button uninstallButton = new Button("Uninstall");
+            uninstallButton.Clicked += async (sender, e) => await UninstallPackage(packageNameEntry.Text);
+            Button browseApkButton = new Button("Browse APK");
+            browseApkButton.Clicked += (sender, e) => Helper.BrowseForFile(packageNameEntry, mainWindow);
+
+            packageActionBox.PackStart(packageNameEntry, true, true, 0);
+            packageActionBox.PackStart(browseApkButton, false, false, 0);
+            packageBox.PackStart(packageActionBox, false, false, 0);
+
+            Box installUninstallBox = new Box(Orientation.Horizontal, 5);
+            installUninstallBox.PackStart(installButton, true, true, 0);
+            installUninstallBox.PackStart(uninstallButton, true, true, 0);
+            packageBox.PackStart(installUninstallBox, false, false, 0);
+
+            packageFrame.Add(packageBox);
+            adbBox.PackStart(packageFrame, false, false, 0);
+
+            // File Management Section
+            Frame fileFrame = new Frame();
+            Label fileFrameLabel = new Label
+            {
+                Markup = "<b>File Management</b>",
+                Xalign = 0.5f
+            };
+            fileFrame.LabelWidget = fileFrameLabel;
+            Box fileBox = new Box(Orientation.Vertical, 5);
+
+            // Push file
+            Box pushBox = new Box(Orientation.Horizontal, 5);
+            Entry localFileEntry = new Entry { PlaceholderText = "Local file path" };
+            Entry remotePathEntry = new Entry { PlaceholderText = "Remote path (e.g., /sdcard/)" };
+            Button browsePushButton = new Button("Browse");
+            browsePushButton.Clicked += (sender, e) => Helper.BrowseForFile(localFileEntry, mainWindow);
+            Button pushButton = new Button("Push File");
+            pushButton.Clicked += async (sender, e) => await PushFile(localFileEntry.Text, remotePathEntry.Text);
+
+            pushBox.PackStart(localFileEntry, true, true, 0);
+            pushBox.PackStart(browsePushButton, false, false, 0);
+            fileBox.PackStart(pushBox, false, false, 0);
+            fileBox.PackStart(remotePathEntry, false, false, 0);
+            fileBox.PackStart(pushButton, false, false, 0);
+
+            // Pull file
+            Box pullBox = new Box(Orientation.Horizontal, 5);
+            Entry remoteFileEntry = new Entry { PlaceholderText = "Remote file path" };
+            Entry localPathEntry = new Entry { PlaceholderText = "Local destination path" };
+            Button pullButton = new Button("Pull File");
+            pullButton.Clicked += async (sender, e) => await PullFile(remoteFileEntry.Text, localPathEntry.Text);
+
+            pullBox.PackStart(remoteFileEntry, true, true, 0);
+            pullBox.PackStart(localPathEntry, true, true, 0);
+            fileBox.PackStart(pullBox, false, false, 0);
+            fileBox.PackStart(pullButton, false, false, 0);
+
+            fileFrame.Add(fileBox);
+            adbBox.PackStart(fileFrame, false, false, 0);
+
+            // System Actions Section
+            Frame systemFrame = new Frame();
+            Label systemFrameLabel = new Label
+            {
+                Markup = "<b>System Actions</b>",
+                Xalign = 0.5f
+            };
+            systemFrame.LabelWidget = systemFrameLabel;
+            Box systemBox = new Box(Orientation.Vertical, 5);
+
+            Box systemButtonsBox1 = new Box(Orientation.Horizontal, 5);
+            Button rebootButton = new Button("Reboot Device") { WidthRequest = 95 };
+            rebootButton.Clicked += async (sender, e) => await RebootDevice();
+            Button rebootBootloaderButton = new Button("Reboot to Bootloader") { WidthRequest = 95 };
+            rebootBootloaderButton.Clicked += async (sender, e) => await RebootToBootloader();
+
+            systemButtonsBox1.PackStart(rebootButton, true, true, 0);
+            systemButtonsBox1.PackStart(rebootBootloaderButton, true, true, 0);
+            systemBox.PackStart(systemButtonsBox1, false, false, 0);
+
+            Box systemButtonsBox2 = new Box(Orientation.Horizontal, 5);
+            Button rebootRecoveryButton = new Button("Reboot to Recovery") { WidthRequest = 95 };
+            rebootRecoveryButton.Clicked += async (sender, e) => await RebootToRecovery();
+            Button rebootDownloadButton = new Button("Reboot to Download") { WidthRequest = 95 };
+            rebootDownloadButton.Clicked += async (sender, e) => await RebootToDownload();
+
+            systemButtonsBox2.PackStart(rebootRecoveryButton, true, true, 0);
+            systemButtonsBox2.PackStart(rebootDownloadButton, true, true, 0);
+            systemBox.PackStart(systemButtonsBox2, false, false, 0);
+
+            Box systemButtonsBox3 = new Box(Orientation.Horizontal, 5);
+            Button logcatButton = new Button("Start Logcat") { WidthRequest = 200 };
+            logcatButton.Clicked += async (sender, e) => await StartLogcat();
+
+            systemButtonsBox3.PackStart(logcatButton, true, true, 0);
+            systemBox.PackStart(systemButtonsBox3, false, false, 0);
+
+            systemFrame.Add(systemBox);
+            adbBox.PackStart(systemFrame, false, false, 0);
+
+            // Shell Section
+            Frame shellFrame = new Frame();
+            Label shellFrameLabel = new Label
+            {
+                Markup = "<b>Shell Commands</b>",
+                Xalign = 0.5f
+            };
+            shellFrame.LabelWidget = shellFrameLabel;
+            Box shellBox = new Box(Orientation.Vertical, 5);
+
+            Entry shellCommandEntry = new Entry { PlaceholderText = "Enter shell command" };
+            Button executeShellButton = new Button("Execute Shell Command");
+            executeShellButton.Clicked += async (sender, e) => await ExecuteShellCommand(shellCommandEntry.Text);
+
+            shellBox.PackStart(shellCommandEntry, false, false, 0);
+            shellBox.PackStart(executeShellButton, false, false, 0);
+
+            shellFrame.Add(shellBox);
+            adbBox.PackStart(shellFrame, false, false, 0);
+
+            // Right side: ADB Logs (create separate log view for ADB)
+            Box rightBox = new Box(Orientation.Vertical, 2);
+            paned.Pack2(rightBox, true, false);
+
+            Label adbLogTitleLabel = new Label("ADB Output");
+            adbLogTitleLabel.Selectable = false;
+            rightBox.PackStart(adbLogTitleLabel, false, false, 0);
+
+            // Create separate log view for ADB
+            adbLogTextView = new TextView { Editable = false, Monospace = true };
+            ScrolledWindow adbScrolledWindow = new ScrolledWindow();
+            adbScrolledWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+            adbScrolledWindow.Add(adbLogTextView);
+            rightBox.PackStart(adbScrolledWindow, true, true, 0);
+
+            // Add Save ADB Logs button
+            Button saveAdbLogsButton = new Button("Save ADB Logs");
+            saveAdbLogsButton.Clicked += (sender, e) => SaveAdbLogsToFile();
+            rightBox.PackStart(saveAdbLogsButton, false, false, 10);
+
+            paned.Pack1(adbBox, true, false);
+
+            return paned;
         }
 
         private static Widget CreateGappsTab()
@@ -370,6 +544,324 @@ namespace Aesir
             {
                 Console.Error.WriteLine($"Error saving logs: {ex}");
                 Helper.DisplayErrorMessage($"Error saving logs: {ex.Message}");
+            }
+        }
+
+        // ADB-related methods
+        private static async Task RefreshAdbDevices()
+        {
+            try
+            {
+                AppendAdbLog("Refreshing ADB devices...");
+                string result = await Helper.ExecuteCommand("adb", "devices -l");
+                AppendAdbLog("Connected ADB devices:");
+                AppendAdbLog(result);
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error refreshing ADB devices: {ex.Message}");
+            }
+        }
+
+        private static async Task GetDeviceInfo()
+        {
+            try
+            {
+                AppendAdbLog("Getting device information...");
+                
+                // Get device model
+                string model = await Helper.ExecuteCommand("adb", "shell getprop ro.product.model");
+                AppendAdbLog($"Model: {model}");
+                
+                // Get Android version
+                string androidVersion = await Helper.ExecuteCommand("adb", "shell getprop ro.build.version.release");
+                AppendAdbLog($"Android Version: {androidVersion}");
+                
+                // Get API level
+                string apiLevel = await Helper.ExecuteCommand("adb", "shell getprop ro.build.version.sdk");
+                AppendAdbLog($"API Level: {apiLevel}");
+                
+                // Get manufacturer
+                string manufacturer = await Helper.ExecuteCommand("adb", "shell getprop ro.product.manufacturer");
+                AppendAdbLog($"Manufacturer: {manufacturer}");
+                
+                // Get device codename
+                string codename = await Helper.ExecuteCommand("adb", "shell getprop ro.product.name");
+                AppendAdbLog($"Codename: {codename}");
+                
+                // Get serial number
+                string serial = await Helper.ExecuteCommand("adb", "get-serialno");
+                AppendAdbLog($"Serial Number: {serial}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error getting device info: {ex.Message}");
+            }
+        }
+
+        private static async Task GetBatteryInfo()
+        {
+            try
+            {
+                AppendAdbLog("Getting battery information...");
+                string result = await Helper.ExecuteCommand("adb", "shell dumpsys battery");
+                AppendAdbLog("Battery Info:");
+                AppendAdbLog(result);
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error getting battery info: {ex.Message}");
+            }
+        }
+
+        private static async Task ListInstalledPackages()
+        {
+            try
+            {
+                AppendAdbLog("Listing installed packages...");
+                string result = await Helper.ExecuteCommand("adb", "shell pm list packages");
+                AppendAdbLog("Installed packages:");
+                AppendAdbLog(result);
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error listing packages: {ex.Message}");
+            }
+        }
+
+        private static async Task InstallPackage(string packagePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(packagePath))
+                {
+                    AppendAdbLog("Please specify a package path or APK file.");
+                    return;
+                }
+
+                AppendAdbLog($"Installing package: {packagePath}");
+                string result = await Helper.ExecuteCommand("adb", $"install \"{packagePath}\"");
+                AppendAdbLog($"Install result: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error installing package: {ex.Message}");
+            }
+        }
+
+        private static async Task UninstallPackage(string packageName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(packageName))
+                {
+                    AppendAdbLog("Please specify a package name.");
+                    return;
+                }
+
+                AppendAdbLog($"Uninstalling package: {packageName}");
+                string result = await Helper.ExecuteCommand("adb", $"uninstall {packageName}");
+                AppendAdbLog($"Uninstall result: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error uninstalling package: {ex.Message}");
+            }
+        }
+
+        private static async Task PushFile(string localPath, string remotePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(localPath) || string.IsNullOrWhiteSpace(remotePath))
+                {
+                    AppendAdbLog("Please specify both local and remote paths.");
+                    return;
+                }
+
+                AppendAdbLog($"Pushing file from {localPath} to {remotePath}");
+                string result = await Helper.ExecuteCommand("adb", $"push \"{localPath}\" \"{remotePath}\"");
+                AppendAdbLog($"Push result: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error pushing file: {ex.Message}");
+            }
+        }
+
+        private static async Task PullFile(string remotePath, string localPath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(remotePath) || string.IsNullOrWhiteSpace(localPath))
+                {
+                    AppendAdbLog("Please specify both remote and local paths.");
+                    return;
+                }
+
+                AppendAdbLog($"Pulling file from {remotePath} to {localPath}");
+                string result = await Helper.ExecuteCommand("adb", $"pull \"{remotePath}\" \"{localPath}\"");
+                AppendAdbLog($"Pull result: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error pulling file: {ex.Message}");
+            }
+        }
+
+        private static async Task RebootDevice()
+        {
+            try
+            {
+                AppendAdbLog("Rebooting device...");
+                string result = await Helper.ExecuteCommand("adb", "reboot");
+                AppendAdbLog($"Reboot command sent: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error rebooting device: {ex.Message}");
+            }
+        }
+
+        private static async Task RebootToBootloader()
+        {
+            try
+            {
+                AppendAdbLog("Rebooting device to bootloader...");
+                string result = await Helper.ExecuteCommand("adb", "reboot bootloader");
+                AppendAdbLog($"Reboot to bootloader command sent: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error rebooting to bootloader: {ex.Message}");
+            }
+        }
+
+        private static async Task RebootToRecovery()
+        {
+            try
+            {
+                AppendAdbLog("Rebooting device to recovery...");
+                string result = await Helper.ExecuteCommand("adb", "reboot recovery");
+                AppendAdbLog($"Reboot to recovery command sent: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error rebooting to recovery: {ex.Message}");
+            }
+        }
+
+        private static async Task RebootToDownload()
+        {
+            try
+            {
+                AppendAdbLog("Rebooting device to download mode...");
+                string result = await Helper.ExecuteCommand("adb", "reboot download");
+                AppendAdbLog($"Reboot to download mode command sent: {result}");
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error rebooting to download mode: {ex.Message}");
+            }
+        }
+
+        private static async Task StartLogcat()
+        {
+            try
+            {
+                AppendAdbLog("Starting logcat (showing last 100 lines)...");
+                string result = await Helper.ExecuteCommand("adb", "logcat -d -t 100");
+                AppendAdbLog("Logcat output:");
+                AppendAdbLog(result);
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error starting logcat: {ex.Message}");
+            }
+        }
+
+        private static async Task ExecuteShellCommand(string command)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(command))
+                {
+                    AppendAdbLog("Please enter a shell command.");
+                    return;
+                }
+
+                AppendAdbLog($"Executing shell command: {command}");
+                string result = await Helper.ExecuteCommand("adb", $"shell {command}");
+                AppendAdbLog($"Shell command result:");
+                AppendAdbLog(result);
+            }
+            catch (Exception ex)
+            {
+                AppendAdbLog($"Error executing shell command: {ex.Message}");
+            }
+        }
+
+        private static void AppendAdbLog(string message)
+        {
+            Application.Invoke(delegate
+            {
+                if (adbLogTextView != null)
+                {
+                    TextBuffer buffer = adbLogTextView.Buffer;
+                    TextIter endIter = buffer.EndIter;
+                    string timestamp = DateTime.Now.ToString("  [HH:mm] > ");
+                    buffer.Insert(ref endIter, timestamp + message + "\n");
+
+                    // Create a tag for smaller font size
+                    TextTag tag = new TextTag(null);
+                    tag.SizePoints = 10;
+                    buffer.TagTable.Add(tag);
+
+                    // Apply the tag to the newly inserted text
+                    buffer.ApplyTag(tag, buffer.StartIter, buffer.EndIter);
+
+                    // Auto-scroll to the bottom
+                    adbLogTextView.ScrollToIter(buffer.EndIter, 0, false, 0, 0);
+                }
+            });
+        }
+
+        private static void SaveAdbLogsToFile()
+        {
+            try
+            {
+                // Open a file chooser dialog to select the save location
+                FileChooserDialog fileChooser = new FileChooserDialog(
+                    "Save ADB Logs",
+                    mainWindow,
+                    FileChooserAction.Save,
+                    "Cancel", ResponseType.Cancel,
+                    "Save", ResponseType.Accept
+                );
+
+                if (fileChooser.Run() == (int)ResponseType.Accept)
+                {
+                    string filePath = fileChooser.Filename;
+                    fileChooser.Destroy();
+
+                    // Get the logs from the ADB TextView
+                    string logs = adbLogTextView?.Buffer?.Text ?? string.Empty;
+
+                    // Write the logs to the selected file
+                    System.IO.File.WriteAllText(filePath, logs);
+
+                    // Display a success message
+                    AppendAdbLog("ADB logs saved successfully.");
+                }
+                else
+                {
+                    fileChooser.Destroy();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error saving ADB logs: {ex}");
+                Helper.DisplayErrorMessage($"Error saving ADB logs: {ex.Message}");
             }
         }
     }
