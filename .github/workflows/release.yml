@@ -31,18 +31,17 @@ jobs:
         fi
         ls -la bin/Release/net9.0/linux-x64/
         
-    - name: Read changelog
+    - name: Get version from release
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+    - name: Read CHANGELOG.md
       id: changelog
       run: |
-        if [ -f "CHANGELOG.md" ]; then
-          {
-            echo 'changelog<<CHANGELOG_EOF'
-            cat CHANGELOG.md
-            echo 'CHANGELOG_EOF'
-          } >> "$GITHUB_OUTPUT"
-        else
-          echo "changelog=No changelog available" >> "$GITHUB_OUTPUT"
-        fi
+        CHANGELOG=$(cat CHANGELOG.md)
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         
     - name: Upload release asset
       uses: actions/upload-release-asset@v1
@@ -62,6 +61,7 @@ jobs:
           const changelog = `${{ steps.changelog.outputs.changelog }}`;
           
           await github.rest.repos.updateRelease({
+            name : `v${{ steps.get_version.outputs.VERSION }}`,
             owner: context.repo.owner,
             repo: context.repo.repo,
             release_id: context.payload.release.id,
