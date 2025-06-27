@@ -35,11 +35,13 @@ jobs:
       id: changelog
       run: |
         if [ -f "CHANGELOG.md" ]; then
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat CHANGELOG.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo 'changelog<<CHANGELOG_EOF'
+            cat CHANGELOG.md
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
         else
-          echo "changelog=No changelog available" >> $GITHUB_OUTPUT
+          echo "changelog=No changelog available" >> "$GITHUB_OUTPUT"
         fi
         
     - name: Upload release asset
