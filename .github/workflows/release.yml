@@ -1,0 +1,67 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Make build script executable
+      run: chmod +x build.sh
+      
+    - name: Build project
+      run: ./build.sh
+      
+    - name: Verify build output
+      run: |
+        if [ ! -f "bin/Release/net9.0/linux-x64/Aesir" ]; then
+          echo "Build output not found!"
+          exit 1
+        fi
+        ls -la bin/Release/net9.0/linux-x64/
+        
+    - name: Read changelog
+      id: changelog
+      run: |
+        if [ -f "CHANGELOG.md" ]; then
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "changelog=No changelog available" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: bin/Release/net9.0/linux-x64/Aesir
+        asset_name: Aesir
+        asset_content_type: application/octet-stream
+        
+    - name: Update release description
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const changelog = `${{ steps.changelog.outputs.changelog }}`;
+          
+          await github.rest.repos.updateRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: context.payload.release.id,
+            body: changelog || 'No changelog available'
+          });
