@@ -1,14 +1,10 @@
-## [1.1.0] - 2025-06-27
+## [1.1.1] - 2025-06-28
 
 ### Added
-- ADB functionality
+- aarch64 build.
 
-### Changed
-- Logs layout
-
-### Deprecated
-- N/A
 ### Removed
 - N/A
+
 ### Fixed
-- lsusb-dev lib
+- Publushing profiles.

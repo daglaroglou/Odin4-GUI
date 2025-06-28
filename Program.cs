@@ -76,7 +76,7 @@ namespace Aesir
 
                 // Create footer label with clickable link and version information
                 Label footerLabel = new Label();
-                footerLabel.Markup = "Made by <a href=\"https://github.com/daglaroglou\">daglaroglou</a> with ❤️ · <span size='small'>v1.1.0</span>";
+                footerLabel.Markup = "Made by <a href=\"https://github.com/daglaroglou\">daglaroglou</a> with ❤️ · <span size='small'>v1.1.1</span>";
                 footerLabel.Selectable = false;
                 mainBox.PackEnd(footerLabel, false, false, 10);
 
