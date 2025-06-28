@@ -293,6 +293,10 @@ jobs:
         echo "$MESSAGE" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
+    - name: Get Current UTC Timestamp
+      id: get-timestamp
+      run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
     - name: Send Telegram Notification
       uses: appleboy/telegram-action@master
       with:
@@ -304,7 +308,7 @@ jobs:
         message: |
           ${{ steps.format-push.outputs.message }}${{ steps.format-pr.outputs.message }}${{ steps.format-issue.outputs.message }}${{ steps.format-release.outputs.message }}${{ steps.format-workflow.outputs.message }}${{ steps.format-comment.outputs.message }}${{ steps.format-summary.outputs.message }}
           
-          🕐 *Sent at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*
+          🕐 Sent at: ${{ steps.get-timestamp.outputs.timestamp }}
 
     - name: Send Failure Notification
       if: failure()
