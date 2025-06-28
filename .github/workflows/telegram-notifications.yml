@@ -29,7 +29,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
+      
     - name: Get Repository Stats
       id: repo-stats
       run: |
@@ -61,7 +61,7 @@ jobs:
       id: format-push
       run: |
         BRANCH_NAME="${{ github.ref_name }}"
-        COMMIT_COUNT=$(echo '${{ toJson(github.event.commits) }}' | jq 'length')
+        COMMIT_COUNT=${{ github.event.commits && length(github.event.commits) || 1 }}
         
         # Create commit list
         COMMIT_LIST=""
@@ -293,30 +293,26 @@ jobs:
         echo "$MESSAGE" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Get Current UTC Timestamp
-      id: get-timestamp
-      run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
-
     - name: Send Telegram Notification
-      uses: EverythingSuckz/github-telegram-notify@v1.1.2
+      uses: appleboy/telegram-action@master
       with:
-        bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-        topic_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message_thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
         format: markdown
         disable_web_page_preview: true
         message: |
           ${{ steps.format-push.outputs.message }}${{ steps.format-pr.outputs.message }}${{ steps.format-issue.outputs.message }}${{ steps.format-release.outputs.message }}${{ steps.format-workflow.outputs.message }}${{ steps.format-comment.outputs.message }}${{ steps.format-summary.outputs.message }}
           
-          🕐 Sent at: ${{ steps.get-timestamp.outputs.timestamp }}
+          🕐 *Sent at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*
 
     - name: Send Failure Notification
       if: failure()
-      uses: EverythingSuckz/github-telegram-notify@v1.1.2
+      uses: appleboy/telegram-action@master
       with:
-        bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-        topic_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message_thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
         format: markdown
         message: |
           ⚠️ **Notification System Error**
