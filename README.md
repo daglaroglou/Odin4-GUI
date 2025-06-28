@@ -1,4 +1,14 @@
+<div align="center">
+
 ![Logo](https://i.imgur.com/B03k1rD.png)
+
+[![Build and Release](https://github.com/daglaroglou/Aesir/actions/workflows/release.yml/badge.svg)](https://github.com/daglaroglou/Aesir/actions/workflows/release.yml)
+![.NET](https://img.shields.io/badge/.NET-512BD4?style=flat&logo=.net&logoColor=white)
+[![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=flat&logo=telegram&logoColor=white)](https://t.me/+MQU_jKc65TExYjk0)
+
+</div>
+
+
 Aesir is a powerful cross-platform GUI tool designed to simplify firmware management, ADB operations, and GAPPS installation for Samsung devices. Built with a sleek and intuitive interface, Aesir is your one-stop solution for managing your Samsung devices efficiently.
 
 ---
