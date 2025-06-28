@@ -12,7 +12,7 @@ on:
   issue_comment:
     types: [created]
   release:
-    types: [published, unpublished, created, edited, deleted, prereleased, released]
+    types: [published, unpublished, edited, deleted, prereleased, released]
   workflow_run:
     workflows: ["CI", "Deploy", "Tests"]
     types: [completed]
@@ -25,9 +25,6 @@ jobs:
     if: github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'
     
     steps:
-    - name: Wait 1 minute before processing
-      run: sleep 60
-      
     - name: Checkout
       uses: actions/checkout@v4
       
