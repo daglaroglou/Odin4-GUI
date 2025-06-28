@@ -298,7 +298,7 @@ jobs:
       run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
     - name: Send Telegram Notification
-      uses: EverythingSuckz/github-telegram-notify@master
+      uses: EverythingSuckz/github-telegram-notify@v1.1.2
       with:
         bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -312,7 +312,7 @@ jobs:
 
     - name: Send Failure Notification
       if: failure()
-      uses: EverythingSuckz/github-telegram-notify@master
+      uses: EverythingSuckz/github-telegram-notify@v1.1.2
       with:
         bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
