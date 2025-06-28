@@ -29,19 +29,19 @@ jobs:
       
     - name: Verify build output amd64
       run: |
-        if [ ! -f "bin/Release/net9.0/linux-amd64/Aesir" ]; then
+        if [ ! -f "bin/Release/net9.0/publish/linux-amd64/Aesir" ]; then
           echo "Build output not found!"
           exit 1
         fi
-        ls -la bin/Release/net9.0/linux-amd64/
+        ls -la bin/Release/net9.0/publish/linux-amd64/
 
     - name: Verify build output arm64
       run: |
-        if [ ! -f "bin/Release/net9.0/linux-arm64/Aesir" ]; then
+        if [ ! -f "bin/Release/net9.0/publish/linux-arm64/Aesir" ]; then
           echo "Build output not found!"
           exit 1
         fi
-        ls -la bin/Release/net9.0/linux-arm64/
+        ls -la bin/Release/net9.0/publish/linux-arm64/
         
     - name: Get version from release
       id: get_version
