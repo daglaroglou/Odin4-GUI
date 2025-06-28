@@ -298,7 +298,7 @@ jobs:
       run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
     - name: Send Telegram Notification
-      uses: appleboy/telegram-action@master
+      uses: appleboy/telegram-action@v0.1.7
       with:
         to: ${{ secrets.TELEGRAM_CHAT_ID }}
         token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -312,7 +312,7 @@ jobs:
 
     - name: Send Failure Notification
       if: failure()
-      uses: appleboy/telegram-action@master
+      uses: appleboy/telegram-action@v0.1.7
       with:
         to: ${{ secrets.TELEGRAM_CHAT_ID }}
         token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
