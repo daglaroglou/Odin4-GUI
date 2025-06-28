@@ -27,13 +27,21 @@ jobs:
     - name: Build project
       run: ./build.sh
       
-    - name: Verify build output
+    - name: Verify build output amd64
       run: |
-        if [ ! -f "bin/Release/net9.0/linux-x64/Aesir" ]; then
+        if [ ! -f "bin/Release/net9.0/linux-amd64/Aesir" ]; then
           echo "Build output not found!"
           exit 1
         fi
-        ls -la bin/Release/net9.0/linux-x64/
+        ls -la bin/Release/net9.0/linux-amd64/
+
+    - name: Verify build output arm64
+      run: |
+        if [ ! -f "bin/Release/net9.0/linux-arm64/Aesir" ]; then
+          echo "Build output not found!"
+          exit 1
+        fi
+        ls -la bin/Release/net9.0/linux-arm64/
         
     - name: Get version from release
       id: get_version
@@ -47,14 +55,24 @@ jobs:
         echo "$CHANGELOG" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         
-    - name: Upload release asset
+    - name: Upload release asset amd64
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: bin/Release/net9.0/linux-x64/Aesir
-        asset_name: Aesir
+        asset_path: bin/Release/net9.0/publish/linux-amd64/Aesir
+        asset_name: Aesir-amd64-v${{ steps.get_version.outputs.VERSION }}
+        asset_content_type: application/octet-stream
+    
+    - name: Upload release asset arm64
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: bin/Release/net9.0/publish/linux-arm64/Aesir
+        asset_name: Aesir-arm64-v${{ steps.get_version.outputs.VERSION }}
         asset_content_type: application/octet-stream
         
     - name: Update release description
