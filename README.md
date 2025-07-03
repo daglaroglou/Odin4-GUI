@@ -27,26 +27,39 @@ Aesir is a powerful cross-platform GUI tool designed to simplify firmware manage
 ## 📦 Installation
 
 ### Prerequisites
-- [.NET 8.0+ SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (idealy [latest](https://dotnet.microsoft.com/download/dotnet/latest))
+
+- [.NET 8.0+ SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (ideally [latest](https://dotnet.microsoft.com/download/dotnet/latest))
 - GTK+ 3.0 or higher (for Linux)
 
 ### Build and Run
+
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/daglaroglou/Aesir.git
-   cd Aesir
-   ```
-2. Build the project:
+    ```bash
+    git clone https://github.com/daglaroglou/Aesir.git
+    cd Aesir
+    ```
+
+2. Build the project for all supported architectures:
     ```bash
     bash build.sh
     ```
-3. Run:
-    ```bash
-    sudo ./bin/Release/netX.X/publish/linux-x64/Aesir #replace X.X with dotnet version
-    ```
+    This will publish builds for both amd64 and arm64 architectures using the appropriate publish profiles.
+
+3. Run the application for your architecture (replace X.X with your installed .NET version):
+
+    - For amd64:
+      ```bash
+      sudo ./bin/Release/netX.X/publish/linux-x64/Aesir
+      ```
+
+    - For arm64:
+      ```bash
+      sudo ./bin/Release/netX.X/publish/linux-arm64/Aesir
+      ```
 
 ## 🤝 Contributing
-### We welcome contributions! To get started:
+
+We welcome contributions! To get started:
 
 1. Fork the repository.
     ```bash
@@ -68,8 +81,9 @@ Aesir is a powerful cross-platform GUI tool designed to simplify firmware manage
 
 ---
 
-### 🧑‍💻 Developers
- - Christos Daglaroglou - [GitHub](https://github.com/daglaroglou)
+### 👨‍💻 Developers
+
+- Christos Daglaroglou - [GitHub](https://github.com/daglaroglou)
 
 ---
 
